@@ -13,7 +13,7 @@ import (
 
 type App struct {
 	config      *models.Config
-	executor    *executor.Executor
+	Executor    *executor.Executor
 	logger      *logger.Logger
 	threadCount int
 	ignoreCheck bool
@@ -32,7 +32,7 @@ func NewApp(configFilePath string, threadCount int, ignoreCheck bool, logger *lo
 
 	return &App{
 		config:      cfg,
-		executor:    executor.NewExecutor(logger),
+		Executor:    executor.NewExecutor(logger),
 		logger:      logger,
 		threadCount: threadCount,
 		ignoreCheck: ignoreCheck,
@@ -96,7 +96,7 @@ func (a *App) StartService(serviceName string) {
 		}
 	}
 
-	if err := a.executor.StartService(service); err != nil {
+	if err := a.Executor.StartService(service); err != nil {
 		a.logger.Fatalf("Error starting service: %v", err)
 	}
 }
@@ -106,7 +106,7 @@ func (a *App) startService(service *models.Service) error {
 
 	for _, process := range service.Processes {
 		a.logger.Infof("Starting process: %s on host: %s", process.Name, process.HostName)
-		_, err := a.executor.ExecuteCommand(process.StartCmd, process.HostName)
+		_, err := a.Executor.ExecuteCommand(process.StartCmd, process.HostName)
 		if err != nil {
 			return err
 		}
@@ -115,7 +115,7 @@ func (a *App) startService(service *models.Service) error {
 		time.Sleep(time.Duration(a.config.WaitTime) * time.Second)
 
 		// Check if the process is running
-		isRunning, err := a.executor.CheckProcess(service.Name, process.Name)
+		isRunning, err := a.Executor.CheckProcess(service.Name, process.Name)
 		if err != nil {
 			return err
 		}
@@ -136,7 +136,7 @@ func (a *App) StopService(serviceName string) {
 		a.logger.Fatalf("Error finding service: %v", err)
 	}
 
-	if err := a.executor.StopService(service); err != nil {
+	if err := a.Executor.StopService(service); err != nil {
 		a.logger.Fatalf("Error stopping service: %v", err)
 	}
 }
@@ -146,7 +146,7 @@ func (a *App) stopService(service *models.Service) error {
 
 	for _, process := range service.Processes {
 		a.logger.Infof("Stopping process: %s on host: %s", process.Name, process.HostName)
-		_, err := a.executor.ExecuteCommand(process.StopCmd, process.HostName)
+		_, err := a.Executor.ExecuteCommand(process.StopCmd, process.HostName)
 		if err != nil {
 			return err
 		}
@@ -155,7 +155,7 @@ func (a *App) stopService(service *models.Service) error {
 		time.Sleep(time.Duration(a.config.WaitTime) * time.Second)
 
 		// Check if the process is stopped
-		isRunning, err := a.executor.CheckProcess(service.Name, process.Name)
+		isRunning, err := a.Executor.CheckProcess(service.Name, process.Name)
 		if err != nil {
 			return err
 		}
@@ -173,7 +173,7 @@ func (a *App) CheckAll() []models.CheckResult {
 	var allResults []models.CheckResult
 
 	for _, service := range a.config.DependencyTree { // Iterate over DependencyTree instead
-		results := a.executor.CheckService(service)
+		results := a.Executor.CheckService(service)
 		allResults = append(allResults, results...)
 	}
 
@@ -188,7 +188,7 @@ func (a *App) CheckService(serviceName string) []models.CheckResult {
 		a.logger.Fatalf("Error finding service: %v", err)
 	}
 
-	return a.executor.CheckService(service)
+	return a.Executor.CheckService(service)
 }
 
 func (a *App) CheckProcess(serviceName, processName string) []models.CheckResult {
@@ -205,7 +205,7 @@ func (a *App) CheckProcess(serviceName, processName string) []models.CheckResult
 		a.logger.Fatalf("Error finding process: %v", err)
 	}
 
-	isRunning, err := a.executor.CheckProcess(serviceName, processName)
+	isRunning, err := a.Executor.CheckProcess(serviceName, processName)
 	if err != nil {
 		a.logger.Fatalf("Error checking process: %v", err)
 	}

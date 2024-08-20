@@ -1,36 +1,39 @@
 # Big Brother - Generic Application Monitoring and Management Tool
 
-Big Brother is a Go-based tool for monitoring and managing (start/stop) applications across different environments. It reads configuration from a YAML file, validates dependencies, and provides commands to start, stop, and check the status of services and processes.
+Big Brother is a Go-based tool for monitoring and managing (start/stop) applications across different environments. It
+reads configuration from a YAML file, validates dependencies, and provides commands to start, stop, and check the status
+of services and processes.
 
 ## Features
 
-*   **Configuration-driven:** Define your environment and services in a YAML file.
-*   **Dependency management:** Automatically handles service dependencies to ensure correct startup and shutdown order.
-*   **Start/Stop/Check:** Provides commands to start, stop, and check the status of services and processes.
-*   **Parallel processing:** Optionally process services in parallel for faster execution.
-*   **JSON output:** Get structured JSON output for the `check` command.
-*   **Verbose logging:** Enable detailed logging for troubleshooting.
-*   **Cross-platform:** Builds static binaries for different operating systems and architectures.
-*   **Testable:** Includes unit and integration tests.
+* **Configuration-driven:** Define your environment and services in a YAML file.
+* **Dependency management:** Automatically handles service dependencies to ensure correct startup and shutdown order.
+* **Start/Stop/Check:** Provides commands to start, stop, and check the status of services and processes.
+* **Parallel processing:** Optionally process services in parallel for faster execution.
+* **JSON output:** Get structured JSON output for the `check` command.
+* **Verbose logging:** Enable detailed logging for troubleshooting.
+* **Cross-platform:** Builds static binaries for different operating systems and architectures.
+* **Testable:** Includes unit and integration tests.
 
 ## Installation
 
-1.  **Clone the repository:**
+1. **Clone the repository:**
 
-    ```bash
-    git clone https://your-repo-url/big-brother.git
-    cd big-brother
-    ```
+   ```bash
+   git clone https://your-repo-url/big-brother.git
+   cd big-brother
+   ```
 
-2.  **Build the binary:**
+2. **Build the binary:**
 
-    ```bash
-    make build
-    ```
+   ```bash
+   make build
+   ```
 
-    This will create the `big-brother` binary in the `build` directory.
+   This will create the `big-brother` binary in the `build` directory.
 
 ## Usage
+
 ```
 big-brother [start|stop|check] [options]
 
@@ -45,26 +48,25 @@ Options:
 -t, --thread-count int   Number of threads for parallel processing (default 1)
 ```
 
-
 **Examples:**
 
-*   **Start all services:**
+* **Start all services:**
 
-    ```bash
-    big-brother start
-    ```
+  ```bash
+  big-brother start
+  ```
 
-*   **Stop a specific service:**
+* **Stop a specific service:**
 
-    ```bash
-    big-brother stop -s service1
-    ```
+  ```bash
+  big-brother stop -s service1
+  ```
 
-*   **Check the status of all services and get JSON output:**
+* **Check the status of all services and get JSON output:**
 
-    ```bash
-    big-brother check -j
-    ```
+  ```bash
+  big-brother check -j
+  ```
 
 ## Configuration
 
