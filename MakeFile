@@ -1,0 +1,74 @@
+# Go parameters
+GOCMD=go
+GOBUILD=$(GOCMD) build
+GOCLEAN=$(GOCMD) clean
+GOTEST=$(GOCMD) test
+GOGET=$(GOCMD) get
+BINARY_NAME=big-brother
+BUILD_DIR=build
+
+# Project variables
+VERSION := 0.0.1
+#VERSION := $(shell git describe --tags --always --dirty)
+BUILD_DATE := $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
+LDFLAGS := -ldflags "-X 'main.Version=$(VERSION)' -X 'main.BuildDate=$(BUILD_DATE)'"
+
+# Build targets
+.PHONY: all
+all: build
+
+build:
+	mkdir -p $(BUILD_DIR)
+	$(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) -v ./cmd/big-brother
+
+clean:
+	$(GOCLEAN)
+	rm -rf $(BUILD_DIR)
+
+test:
+	$(GOTEST) -v ./...
+
+deps:
+	$(GOGET) -d -v ./...
+
+# Cross-compilation targets (examples)
+build-linux-amd64:
+	GOOS=linux GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-linux-amd64 -v ./cmd/big-brother
+
+build-darwin-amd64:
+	GOOS=darwin GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME)-darwin-amd64 -v ./cmd/big-brother
+
+# ... (Add more targets as needed for other OS/architecture combinations)
+
+# Linting and formatting
+lint:
+	golangci-lint run
+
+fmt:
+	gofmt -w .
+
+# Additional targets (examples)
+install: build
+	cp $(BUILD_DIR)/$(BINARY_NAME) /usr/local/bin # Or your preferred installation path
+
+run: build
+	$(BUILD_DIR)/$(BINARY_NAME) # Add arguments as needed
+
+# Help target
+help:
+	@echo "Available targets:"
+	@echo "  all: Build the default binary"
+	@echo "  build: Build the binary for the current OS/architecture"
+	@echo "  clean: Clean build artifacts"
+	@echo "  test: Run tests"
+	@echo "  deps: Get dependencies"
+	@echo "  lint: Run linting"
+	@echo "  fmt: Format code"
+	@echo "  install: Install the binary"
+	@echo "  run: Run the binary"
+	@echo "  help: Show this help message"
+	@echo ""
+	@echo "Cross-compilation targets:"
+	@echo "  build-linux-amd64: Build for Linux AMD64"
+	@echo "  build-darwin-amd64: Build for macOS AMD64"
+	@echo "  # ... (Add more as needed)"
