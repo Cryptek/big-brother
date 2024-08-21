@@ -18,7 +18,7 @@ func TestLoadConfig(t *testing.T) {
 	if cfg.WaitTime != 1 {
 		t.Errorf("Expected WaitTime to be 10, but got %d", cfg.WaitTime)
 	}
-	if len(cfg.Services) != 4 {
+	if len(cfg.Services) != 7 {
 		t.Errorf("Expected 2 services, but got %d", len(cfg.Services))
 	}
 	// ... (Add more assertions as needed)

@@ -178,8 +178,8 @@ func (a *App) CheckAll() []models.CheckResult {
 	a.logger.Info("Checking all services...")
 	var allResults []models.CheckResult
 
-	for _, service := range a.config.DependencyTree { // Iterate over DependencyTree instead
-		results := a.Executor.CheckService(service)
+	for _, service := range a.config.Services { // Iterate over DependencyTree instead
+		results := a.Executor.CheckService(&service)
 		allResults = append(allResults, results...)
 	}
 

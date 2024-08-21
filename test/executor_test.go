@@ -28,7 +28,7 @@ func TestExecutor_ExecuteCommand(t *testing.T) {
 }
 
 func TestExecutor_StartService(t *testing.T) {
-	log := logger.NewLogger(true) // Initialize the actual logger
+	log := logger.NewLogger(false) // Initialize the actual logger
 	newExecutor := executor.NewExecutor(log, 1)
 
 	service := &models.Service{

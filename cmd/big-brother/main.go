@@ -8,6 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 )
 
@@ -86,33 +87,66 @@ func main() {
 }
 
 func printCheckResultTable(results []models.CheckResult) {
+
+	// Sort the results
+	sort.Slice(results, func(i, j int) bool {
+		if results[i].ServiceName != results[j].ServiceName {
+			return results[i].ServiceName < results[j].ServiceName
+		} else if results[i].ProcessName != results[j].ProcessName {
+			return results[i].ProcessName < results[j].ProcessName
+		} else {
+			// Convert boolean status to string for comparison
+			statusI := "Not Running"
+			if results[i].IsRunning {
+				statusI = "Running"
+			}
+			statusJ := "Not Running"
+			if results[j].IsRunning {
+				statusJ = "Running"
+			}
+			return statusI < statusJ
+		}
+	})
+
 	// Define column widths for better formatting
 	const (
-		serviceNameWidth = 20
-		processNameWidth = 15
-		hostNameWidth    = 15
+		serviceNameWidth = 35
+		processNameWidth = 10
+		hostNameWidth    = 25
 		statusWidth      = 10
 	)
 
 	// Print header row
 	fmt.Printf("%-*s %-*s %-*s %s\n",
-		serviceNameWidth, "Service Name",
-		processNameWidth, "Process Name",
-		hostNameWidth, "Host Name",
+		serviceNameWidth, "Service",
+		processNameWidth, "Process",
+		hostNameWidth, "Host",
 		"Status")
 	fmt.Println(strings.Repeat("-", serviceNameWidth+processNameWidth+hostNameWidth+statusWidth+3)) // Separator
 
-	// Print each result row
+	// Print each result row with truncation
 	for _, result := range results {
 		status := "Not Running"
 		if result.IsRunning {
 			status = "Running"
 		}
 
+		// Truncate values if they exceed column width
+		serviceName := truncateString(result.ServiceName, serviceNameWidth)
+		processName := truncateString(result.ProcessName, processNameWidth)
+		hostName := truncateString(result.HostName, hostNameWidth)
+
 		fmt.Printf("%-*s %-*s %-*s %s\n",
-			serviceNameWidth, result.ServiceName,
-			processNameWidth, result.ProcessName,
-			hostNameWidth, result.HostName,
+			serviceNameWidth, serviceName,
+			processNameWidth, processName,
+			hostNameWidth, hostName,
 			status)
 	}
+}
+
+func truncateString(str string, maxWidth int) string {
+	if len(str) > maxWidth {
+		return str[:maxWidth-3] + "..."
+	}
+	return str
 }
