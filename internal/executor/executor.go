@@ -3,7 +3,6 @@ package executor
 import (
 	"big-brother/internal/logger"
 	"big-brother/internal/models"
-	"big-brother/internal/utils"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -11,17 +10,24 @@ import (
 )
 
 type Executor struct {
-	logger *logger.Logger
+	logger   *logger.Logger
+	waitTime int
 }
 
-func NewExecutor(logger *logger.Logger) *Executor {
-	return &Executor{logger: logger}
+func NewExecutor(logger *logger.Logger, waitTime int) *Executor {
+	return &Executor{
+		logger:   logger,
+		waitTime: waitTime,
+	}
 }
 
 func (e *Executor) ExecuteCommand(command string, hostName string) (string, error) {
 	// For now, assume all commands are local
-	// You'll need to implement remote execution logic if needed
+	e.logger.Infof("Receieved Cmd to execute : %s", command)
 	parts := strings.Fields(command)
+	if len(parts) == 0 {
+		return "", fmt.Errorf("invalid command: %s", command)
+	}
 	cmd := exec.Command(parts[0], parts[1:]...)
 
 	output, err := cmd.CombinedOutput()
@@ -37,16 +43,17 @@ func (e *Executor) StartService(service *models.Service) error {
 
 	for _, process := range service.Processes {
 		e.logger.Infof("Starting process: %s on host: %s", process.Name, process.HostName)
+		e.logger.Infof("StartCmd: %s", process.StartCmd)
 		_, err := e.ExecuteCommand(process.StartCmd, process.HostName)
 		if err != nil {
 			return err
 		}
 
 		// Wait for the service to start
-		time.Sleep(time.Duration(e.logger.Config.WaitTime) * time.Second)
+		time.Sleep(time.Duration(e.waitTime) * time.Second)
 
 		// Check if the process is running
-		isRunning, err := e.CheckProcess(service.Name, process.Name)
+		isRunning, err := e.CheckProcess(&process)
 		if err != nil {
 			return err
 		}
@@ -70,10 +77,10 @@ func (e *Executor) StopService(service *models.Service) error {
 		}
 
 		// Wait for the service to stop
-		time.Sleep(time.Duration(e.logger.Config.WaitTime) * time.Second)
+		time.Sleep(time.Duration(e.waitTime) * time.Second)
 
 		// Check if the process is stopped
-		isRunning, err := e.CheckProcess(service.Name, process.Name)
+		isRunning, err := e.CheckProcess(&process)
 		if err != nil {
 			return err
 		}
@@ -90,7 +97,7 @@ func (e *Executor) CheckService(service *models.Service) []models.CheckResult {
 	var results []models.CheckResult
 
 	for _, process := range service.Processes {
-		isRunning, err := e.CheckProcess(service.Name, process.Name)
+		isRunning, err := e.CheckProcess(&process)
 		if err != nil {
 			e.logger.Errorf("Error checking process %s on host %s: %v", process.Name, process.HostName, err)
 			isRunning = false // Assume not running in case of error
@@ -107,22 +114,12 @@ func (e *Executor) CheckService(service *models.Service) []models.CheckResult {
 	return results
 }
 
-func (e *Executor) CheckProcess(serviceName, processName string) (bool, error) {
-	service, err := utils.FindServiceByName(e.logger.Config, serviceName)
-	if err != nil {
-		return false, err
-	}
-
-	process, err := utils.FindProcessByName(service, processName)
-	if err != nil {
-		return false, err
-	}
-
+func (e *Executor) CheckProcess(process *models.Process) (bool, error) {
 	output, err := e.ExecuteCommand(process.StatusCmd, process.HostName)
 	if err != nil {
 		return false, err
 	}
 
 	// You'll need to adjust this logic based on the actual output of your status commands
-	return strings.Contains(output, "running") || strings.Contains(output, "active"), nil
+	return output != "", nil
 }

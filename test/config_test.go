@@ -2,12 +2,14 @@ package test
 
 import (
 	"big-brother/internal/config"
+	"fmt"
 	"testing"
 )
 
 func TestLoadConfig(t *testing.T) {
 	// Test loading a valid config file
 	cfg, err := config.LoadConfig("test_config.yaml")
+	fmt.Printf("%+v\n", cfg)
 	if err != nil {
 		t.Errorf("LoadConfig failed for valid config: %v", err)
 	}

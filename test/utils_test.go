@@ -6,10 +6,9 @@ import (
 	"testing"
 )
 
-// ... (Include the TestIsCyclic from the previous response)
-
+// Test for ValidateConfigAndBuildDependencyTree
 func TestValidateConfigAndBuildDependencyTree(t *testing.T) {
-	// Test with a valid config
+	// Valid configuration with dependencies
 	validConfig := &models.Config{
 		Services: []models.Service{
 			{Name: "service1"},
@@ -19,10 +18,23 @@ func TestValidateConfigAndBuildDependencyTree(t *testing.T) {
 
 	err := utils.ValidateConfigAndBuildDependencyTree(validConfig)
 	if err != nil {
-		t.Errorf("ValidateConfigAndBuildDependencyTree failed for valid config: %v", err)
+		t.Errorf("Valid configuration should not return an error, but got: %v", err)
 	}
 
-	// Test with a config containing duplicate service names
+	// Invalid configuration with cyclic dependencies
+	invalidConfig := &models.Config{
+		Services: []models.Service{
+			{Name: "service1", DependsOn: "service2"},
+			{Name: "service2", DependsOn: "service1"},
+		},
+	}
+
+	err = utils.ValidateConfigAndBuildDependencyTree(invalidConfig)
+	if err == nil {
+		t.Error("Invalid configuration with cyclic dependencies should return an error")
+	}
+
+	// Invalid configuration with duplicate service names
 	duplicateServiceNameConfig := &models.Config{
 		Services: []models.Service{
 			{Name: "service1"},
@@ -34,24 +46,61 @@ func TestValidateConfigAndBuildDependencyTree(t *testing.T) {
 	if err == nil {
 		t.Error("ValidateConfigAndBuildDependencyTree should have failed for duplicate service name")
 	}
-
-	// ... (Add more tests for other invalid config scenarios and cyclic dependencies)
 }
 
+// Test for GetRootNodes
 func TestGetRootNodes(t *testing.T) {
-	services := []*models.Service{
-		{Name: "service1"},
-		{Name: "service2", DependsOn: "service1"},
-		{Name: "service3", DependsOn: "service1"},
-	}
+	// Setup the services with Dependencies and Dependents
+	service1 := &models.Service{Name: "service1"}
+	service2 := &models.Service{Name: "service2"}
+	service3 := &models.Service{Name: "service3"}
 
+	// Manually link dependencies
+	service2.Dependencies = append(service2.Dependencies, service1)
+	service3.Dependencies = append(service3.Dependencies, service1)
+	service1.Dependents = append(service1.Dependents, service2, service3)
+
+	services := []*models.Service{service1, service2, service3}
+
+	// Now correctly identify the root nodes
 	rootNodes := utils.GetRootNodes(services)
 
 	if len(rootNodes) != 1 || rootNodes[0].Name != "service1" {
-		t.Errorf("Expected one root node 'service1', but got: %v", rootNodes)
+		t.Errorf("Expected one root node 'service1', but got: %v", getServiceNames(rootNodes))
+	}
+
+	// Additional test case with multiple root nodes
+	service2.Dependencies = nil // Remove service1 as a dependency
+	service3.Dependencies = []*models.Service{service1}
+	service1.Dependents = []*models.Service{service3}
+
+	rootNodes = utils.GetRootNodes(services)
+
+	if len(rootNodes) != 2 || !containsService(rootNodes, "service1") || !containsService(rootNodes, "service2") {
+		t.Errorf("Expected root nodes 'service1' and 'service2', but got: %v", getServiceNames(rootNodes))
 	}
 }
 
+// Helper function to extract service names from a slice of services
+func getServiceNames(services []*models.Service) []string {
+	names := make([]string, len(services))
+	for i, service := range services {
+		names[i] = service.Name
+	}
+	return names
+}
+
+// Helper function to check if a service name is in the slice of services
+func containsService(services []*models.Service, name string) bool {
+	for _, service := range services {
+		if service.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
+// Test for FindServiceByName
 func TestFindServiceByName(t *testing.T) {
 	config := &models.Config{
 		Services: []models.Service{
@@ -74,6 +123,7 @@ func TestFindServiceByName(t *testing.T) {
 	}
 }
 
+// Test for FindProcessByName
 func TestFindProcessByName(t *testing.T) {
 	service := &models.Service{
 		Name: "test_service",

@@ -32,7 +32,7 @@ func NewApp(configFilePath string, threadCount int, ignoreCheck bool, logger *lo
 
 	return &App{
 		config:      cfg,
-		Executor:    executor.NewExecutor(logger),
+		Executor:    executor.NewExecutor(logger, cfg.WaitTime),
 		logger:      logger,
 		threadCount: threadCount,
 		ignoreCheck: ignoreCheck,
@@ -115,7 +115,7 @@ func (a *App) startService(service *models.Service) error {
 		time.Sleep(time.Duration(a.config.WaitTime) * time.Second)
 
 		// Check if the process is running
-		isRunning, err := a.Executor.CheckProcess(service.Name, process.Name)
+		isRunning, err := a.Executor.CheckProcess(&process)
 		if err != nil {
 			return err
 		}
@@ -155,7 +155,7 @@ func (a *App) stopService(service *models.Service) error {
 		time.Sleep(time.Duration(a.config.WaitTime) * time.Second)
 
 		// Check if the process is stopped
-		isRunning, err := a.Executor.CheckProcess(service.Name, process.Name)
+		isRunning, err := a.Executor.CheckProcess(&process)
 		if err != nil {
 			return err
 		}
@@ -199,13 +199,12 @@ func (a *App) CheckProcess(serviceName, processName string) []models.CheckResult
 		a.logger.Fatalf("Error finding service: %v", err)
 	}
 
-	// Check if the process exists in the service
 	process, err := utils.FindProcessByName(service, processName)
 	if err != nil {
 		a.logger.Fatalf("Error finding process: %v", err)
 	}
 
-	isRunning, err := a.Executor.CheckProcess(serviceName, processName)
+	isRunning, err := a.Executor.CheckProcess(process) // Pass the process directly
 	if err != nil {
 		a.logger.Fatalf("Error checking process: %v", err)
 	}

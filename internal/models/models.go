@@ -8,7 +8,7 @@ type Config struct {
 
 type Service struct {
 	Name         string    `yaml:"name"`
-	DependsOn    string    `yaml:"depends_on"`
+	DependsOn    string    `yaml:"depends_on ,omitempty"`
 	Processes    []Process `yaml:"processes"`
 	Dependents   []*Service
 	Dependencies []*Service

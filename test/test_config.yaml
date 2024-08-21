@@ -1,18 +1,17 @@
-env:
-  wait_time: 10  # Wait time in seconds between service check after start/stop
-  services:
-    - name: service1
-      depends_on: service2
-      processes:
-        - name: process1
-          host_name: host1
-          start_cmd: "command_to_start_process1"
-          stop_cmd: "command_to_stop_process1"
-          status_cmd: "command_to_check_process1"
-    - name: service2
-      processes:
-        - name: process2
-          host_name: host2
-          start_cmd: "command_to_start_process2"
-          stop_cmd: "command_to_stop_process2"
-          status_cmd: "command_to_check_process2"
+wait_time: 10  # Wait time in seconds between service check after start/stop
+services:
+  - name: service1
+    depends_on: service2
+    processes:
+      - name: process1
+        host_name: host1
+        start_cmd: "command_to_start_process1"
+        stop_cmd: "command_to_stop_process1"
+        status_cmd: "command_to_check_process1"
+  - name: service2
+    processes:
+      - name: process2
+        host_name: host2
+        start_cmd: "command_to_start_process2"
+        stop_cmd: "command_to_stop_process2"
+        status_cmd: "command_to_check_process2"

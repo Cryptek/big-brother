@@ -1,7 +1,6 @@
 package logger
 
 import (
-	"big-brother/internal/models"
 	"log"
 	"os"
 )
@@ -9,7 +8,6 @@ import (
 type Logger struct {
 	verbose bool
 	logger  *log.Logger
-	Config  *models.Config
 }
 
 func NewLogger(verbose bool) *Logger {
