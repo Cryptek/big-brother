@@ -1,17 +1,41 @@
-wait_time: 10  # Wait time in seconds between service check after start/stop
+wait_time: 1  # Wait time in seconds between service check after start/stop
 services:
   - name: service1
     depends_on: service2
     processes:
       - name: process1
-        host_name: host1
-        start_cmd: "command_to_start_process1"
-        stop_cmd: "command_to_stop_process1"
-        status_cmd: "command_to_check_process1"
+        host_name: localhost
+        start_cmd: "echo 'starting process1 in service1'"
+        stop_cmd: "echo 'stopping process1 in service1'"
+        status_cmd: "echo 'checking process1 in service1'"
+
   - name: service2
     processes:
+      - name: process1
+        host_name: localhost
+        start_cmd: "echo 'starting process1 in service2'"
+        stop_cmd: "echo 'stopping process1 in service2'"
+        status_cmd: "echo 'checking process1 in service2'"
+
       - name: process2
-        host_name: host2
-        start_cmd: "command_to_start_process2"
-        stop_cmd: "command_to_stop_process2"
-        status_cmd: "command_to_check_process2"
+        host_name: localhost
+        start_cmd: "echo 'starting process2 in service2'"
+        stop_cmd: "echo 'stopping process2 in service2'"
+        status_cmd: "echo 'checking process2 in service2'"
+
+  - name: service3
+    depends_on: service2
+    processes:
+      - name: process1
+        host_name: localhost
+        start_cmd: "echo 'starting process1 in service3'"
+        stop_cmd: "echo 'stopping process1 in service3'"
+        status_cmd: "echo 'checking process1 in service3'"
+
+  - name: service4
+    processes:
+      - name: process1
+        host_name: localhost
+        start_cmd: "echo 'starting process1 in service4'"
+        stop_cmd: "echo 'stopping process1 in service4'"
+        status_cmd: "echo 'checking process1 in service4'"

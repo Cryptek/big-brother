@@ -30,6 +30,11 @@ func NewApp(configFilePath string, threadCount int, ignoreCheck bool, logger *lo
 		logger.Fatalf("Config validation or dependency tree building failed: %v", err)
 	}
 
+	if logger.Verbose {
+		logger.Info("Dependency Tree:")
+		utils.PrintDependencyTree(cfg.DependencyTree, "", true)
+	}
+
 	return &App{
 		config:      cfg,
 		Executor:    executor.NewExecutor(logger, cfg.WaitTime),

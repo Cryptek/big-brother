@@ -15,10 +15,10 @@ func TestLoadConfig(t *testing.T) {
 	}
 
 	// Add assertions to verify the loaded config
-	if cfg.WaitTime != 10 {
+	if cfg.WaitTime != 1 {
 		t.Errorf("Expected WaitTime to be 10, but got %d", cfg.WaitTime)
 	}
-	if len(cfg.Services) != 2 {
+	if len(cfg.Services) != 4 {
 		t.Errorf("Expected 2 services, but got %d", len(cfg.Services))
 	}
 	// ... (Add more assertions as needed)

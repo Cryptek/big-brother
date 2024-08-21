@@ -111,7 +111,7 @@ func isCyclicUtil(graph map[string][]string, node string, visited, recursionStac
 	return false
 }
 
-func topologicalSort(graph map[string][]string, cfg *models.Config) ([]*models.Service, error) {
+func topologicalSort(graph map[string][]string, cfg *models.Config) ([]*models.Service, error) { // Pass cfg here
 	visited := make(map[string]bool)
 	var stack []*models.Service
 
@@ -189,4 +189,34 @@ func FindProcessByName(service *models.Service, processName string) (*models.Pro
 		}
 	}
 	return nil, fmt.Errorf("process not found: %s in service: %s", processName, service.Name)
+}
+
+func PrintDependencyTree(services []*models.Service, prefix string, isLast bool) {
+	for i, service := range services {
+		var branchSymbol string
+		if isLast {
+			if i == len(services)-1 {
+				branchSymbol = "└───"
+			} else {
+				branchSymbol = "├───"
+			}
+		} else {
+			if i == len(services)-1 {
+				branchSymbol = "└──"
+			} else {
+				branchSymbol = "├──"
+			}
+		}
+
+		fmt.Printf("%s%s %s\n", prefix, branchSymbol, service.Name)
+
+		newPrefix := prefix
+		if isLast {
+			newPrefix += "    "
+		} else {
+			newPrefix += "│   "
+		}
+
+		PrintDependencyTree(service.Dependents, newPrefix, i == len(services)-1)
+	}
 }

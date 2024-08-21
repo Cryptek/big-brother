@@ -6,25 +6,25 @@ import (
 )
 
 type Logger struct {
-	verbose bool
+	Verbose bool
 	logger  *log.Logger
 }
 
 func NewLogger(verbose bool) *Logger {
 	return &Logger{
-		verbose: verbose,
+		Verbose: verbose,
 		logger:  log.New(os.Stdout, "", log.LstdFlags),
 	}
 }
 
 func (l *Logger) Info(msg string) {
-	if l.verbose {
+	if l.Verbose {
 		l.logger.Println("[INFO] ", msg)
 	}
 }
 
 func (l *Logger) Infof(format string, v ...interface{}) {
-	if l.verbose {
+	if l.Verbose {
 		l.logger.Printf("[INFO] "+format, v...)
 	}
 }
