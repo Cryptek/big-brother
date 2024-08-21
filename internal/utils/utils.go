@@ -7,41 +7,48 @@ import (
 )
 
 func ValidateConfigAndBuildDependencyTree(cfg *models.Config) error {
-	// 1. Validate config (check for duplicate service names, etc.)
 	if err := validateConfig(cfg); err != nil {
 		return err
 	}
 
-	// 2. Create dependency graph
 	graph, err := createDependencyGraph(cfg)
 	if err != nil {
 		return err
 	}
 
-	// 3. Check for cyclic dependencies
 	if isCyclic(graph) {
 		return errors.New("cyclic dependency detected in config")
 	}
 
-	// 4. Perform topological sort to get the dependency tree
 	sortedServices, err := topologicalSort(graph, cfg)
 	if err != nil {
 		return err
 	}
 
-	// 5. Update the config with the dependency tree
-	cfg.DependencyTree = sortedServices
-
-	// 6. Populate Dependents and Dependencies for each service
-	for _, service := range cfg.DependencyTree {
-		for _, dependencyName := range graph[service.Name] {
-			dependencyService, _ := FindServiceByName(cfg, dependencyName)
-			service.Dependents = append(service.Dependents, dependencyService)
-			dependencyService.Dependencies = append(dependencyService.Dependencies, service)
+	// Clear the DependencyTree and only add root nodes
+	var rootNodes []*models.Service
+	for _, service := range sortedServices {
+		if service.DependsOn == "" {
+			rootNodes = append(rootNodes, service)
 		}
+	}
+	cfg.DependencyTree = rootNodes
+
+	// Populate Dependents and Dependencies for each service
+	for _, service := range cfg.DependencyTree {
+		populateDependents(service, sortedServices)
 	}
 
 	return nil
+}
+
+func populateDependents(parent *models.Service, services []*models.Service) {
+	for _, service := range services {
+		if service.DependsOn == parent.Name {
+			parent.Dependents = append(parent.Dependents, service)
+			populateDependents(service, services) // Recursively populate the child nodes
+		}
+	}
 }
 
 func validateConfig(cfg *models.Config) error {
@@ -71,12 +78,56 @@ func validateConfig(cfg *models.Config) error {
 func createDependencyGraph(cfg *models.Config) (map[string][]string, error) {
 	graph := make(map[string][]string)
 	for _, service := range cfg.Services {
-		graph[service.Name] = []string{}
+		if _, exists := graph[service.Name]; !exists {
+			graph[service.Name] = []string{}
+		}
 		if service.DependsOn != "" {
-			graph[service.Name] = append(graph[service.Name], service.DependsOn)
+			graph[service.DependsOn] = append(graph[service.DependsOn], service.Name)
 		}
 	}
 	return graph, nil
+}
+
+func topologicalSort(graph map[string][]string, cfg *models.Config) ([]*models.Service, error) {
+	visited := make(map[string]bool)
+	includedInTree := make(map[string]bool)
+	var stack []*models.Service
+
+	for node := range graph {
+		if !visited[node] {
+			if err := topologicalSortUtil(graph, node, visited, includedInTree, &stack, cfg); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return stack, nil
+}
+
+func topologicalSortUtil(graph map[string][]string, node string, visited, includedInTree map[string]bool, stack *[]*models.Service, cfg *models.Config) error {
+	visited[node] = true
+
+	// Add the current node's dependents first
+	for _, dependentName := range graph[node] {
+		if !visited[dependentName] {
+			if err := topologicalSortUtil(graph, dependentName, visited, includedInTree, stack, cfg); err != nil {
+				return err
+			}
+		}
+	}
+
+	// Only add to stack if not already included
+	if !includedInTree[node] {
+		for _, service := range cfg.Services {
+			if service.Name == node {
+				*stack = append(*stack, &service)
+				includedInTree[node] = true
+				break
+			}
+		}
+	}
+
+	return nil
 }
 
 func isCyclic(graph map[string][]string) bool {
@@ -109,48 +160,6 @@ func isCyclicUtil(graph map[string][]string, node string, visited, recursionStac
 
 	recursionStack[node] = false
 	return false
-}
-
-func topologicalSort(graph map[string][]string, cfg *models.Config) ([]*models.Service, error) { // Pass cfg here
-	visited := make(map[string]bool)
-	var stack []*models.Service
-
-	for node := range graph {
-		if !visited[node] {
-			if err := topologicalSortUtil(graph, node, visited, &stack, cfg); err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	// Reverse the stack to get the correct order
-	for i, j := 0, len(stack)-1; i < j; i, j = i+1, j-1 {
-		stack[i], stack[j] = stack[j], stack[i]
-	}
-
-	return stack, nil
-}
-
-func topologicalSortUtil(graph map[string][]string, node string, visited map[string]bool, stack *[]*models.Service, cfg *models.Config) error {
-	visited[node] = true
-
-	for _, neighbor := range graph[node] {
-		if !visited[neighbor] {
-			if err := topologicalSortUtil(graph, neighbor, visited, stack, cfg); err != nil {
-				return err
-			}
-		}
-	}
-
-	// Find the service in the original config
-	for _, service := range cfg.Services {
-		if service.Name == node {
-			*stack = append(*stack, &service)
-			break
-		}
-	}
-
-	return nil
 }
 
 func GetRootNodes(services []*models.Service) []*models.Service {
@@ -194,18 +203,10 @@ func FindProcessByName(service *models.Service, processName string) (*models.Pro
 func PrintDependencyTree(services []*models.Service, prefix string, isLast bool) {
 	for i, service := range services {
 		var branchSymbol string
-		if isLast {
-			if i == len(services)-1 {
-				branchSymbol = "└───"
-			} else {
-				branchSymbol = "├───"
-			}
+		if i == len(services)-1 {
+			branchSymbol = "└───"
 		} else {
-			if i == len(services)-1 {
-				branchSymbol = "└──"
-			} else {
-				branchSymbol = "├──"
-			}
+			branchSymbol = "├───"
 		}
 
 		fmt.Printf("%s%s %s\n", prefix, branchSymbol, service.Name)
@@ -217,6 +218,6 @@ func PrintDependencyTree(services []*models.Service, prefix string, isLast bool)
 			newPrefix += "│   "
 		}
 
-		PrintDependencyTree(service.Dependents, newPrefix, i == len(services)-1)
+		PrintDependencyTree(service.Dependents, newPrefix, true)
 	}
 }

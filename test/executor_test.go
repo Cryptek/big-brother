@@ -9,10 +9,10 @@ import (
 
 func TestExecutor_ExecuteCommand(t *testing.T) {
 	log := logger.NewLogger(false) // Initialize the actual logger
-	executor := executor.NewExecutor(log, 1)
+	newExecutor := executor.NewExecutor(log, 1)
 
 	// Test executing a valid command (assuming 'echo' exists)
-	output, err := executor.ExecuteCommand("echo hello", "localhost")
+	output, err := newExecutor.ExecuteCommand("echo hello", "localhost")
 	if err != nil {
 		t.Errorf("ExecuteCommand failed for valid command: %v", err)
 	}
@@ -21,7 +21,7 @@ func TestExecutor_ExecuteCommand(t *testing.T) {
 	}
 
 	// Test executing an invalid command
-	_, err = executor.ExecuteCommand("invalid_command", "localhost")
+	_, err = newExecutor.ExecuteCommand("invalid_command", "localhost")
 	if err == nil {
 		t.Error("ExecuteCommand should have failed for invalid command")
 	}
@@ -29,7 +29,7 @@ func TestExecutor_ExecuteCommand(t *testing.T) {
 
 func TestExecutor_StartService(t *testing.T) {
 	log := logger.NewLogger(true) // Initialize the actual logger
-	executor := executor.NewExecutor(log, 1)
+	newExecutor := executor.NewExecutor(log, 1)
 
 	service := &models.Service{
 		Name: "test_service",
@@ -44,7 +44,7 @@ func TestExecutor_StartService(t *testing.T) {
 		},
 	}
 
-	err := executor.StartService(service)
+	err := newExecutor.StartService(service)
 	if err != nil {
 		t.Errorf("StartService failed: %v", err)
 	}

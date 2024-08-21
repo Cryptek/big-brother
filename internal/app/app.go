@@ -31,6 +31,7 @@ func NewApp(configFilePath string, threadCount int, ignoreCheck bool, logger *lo
 	}
 
 	if logger.Verbose {
+		logger.Infof("Constructed Config is : %s", cfg)
 		logger.Info("Dependency Tree:")
 		utils.PrintDependencyTree(cfg.DependencyTree, "", true)
 	}

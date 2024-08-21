@@ -3,6 +3,7 @@ package test
 import (
 	"big-brother/internal/models"
 	"big-brother/internal/utils"
+	"reflect"
 	"testing"
 )
 
@@ -46,6 +47,30 @@ func TestValidateConfigAndBuildDependencyTree(t *testing.T) {
 	if err == nil {
 		t.Error("ValidateConfigAndBuildDependencyTree should have failed for duplicate service name")
 	}
+
+	// Test with a config that has dependencies
+	dependencyConfig := &models.Config{
+		Services: []models.Service{
+			{Name: "service1", DependsOn: "service2"},
+			{Name: "service2"},
+		},
+	}
+
+	err = utils.ValidateConfigAndBuildDependencyTree(dependencyConfig)
+	if err != nil {
+		t.Errorf("ValidateConfigAndBuildDependencyTree failed for dependency config: %v", err)
+	}
+
+	// Check if the dependency tree is constructed correctly
+	expectedTree := []*models.Service{
+		{Name: "service2", Dependents: []*models.Service{{Name: "service1"}}}, // Add Dependents to service2
+		{Name: "service1", DependsOn: "service2", Dependencies: []*models.Service{{Name: "service2"}}, Dependents: []*models.Service{}},
+	}
+
+	if !reflect.DeepEqual(dependencyConfig.DependencyTree, expectedTree) {
+		t.Errorf("Incorrect dependency tree construction.\nExpected: %+v\nGot: %+v", expectedTree, dependencyConfig.DependencyTree)
+	}
+
 }
 
 // Test for GetRootNodes
