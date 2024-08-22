@@ -1,8 +1,8 @@
-# Big Brother - Generic Application Monitoring and Management Tool
+# Big Brother 
 
-Big Brother is a Go-based tool for monitoring and managing (start/stop) applications across different environments. It
+Big Brother is a Go-based tool for monitoring and managing (start/stop) applications across different environments from cli. It
 reads configuration from a YAML file, validates dependencies, and provides commands to start, stop, and check the status
-of services and processes.
+of services and processes in correct order.
 
 ## Features
 
@@ -20,7 +20,7 @@ of services and processes.
 1. **Clone the repository:**
 
    ```bash
-   git clone https://your-repo-url/big-brother.git
+   git clone https://github.com/Cryptek/big-brother.git
    cd big-brother
    ```
 

@@ -54,31 +54,22 @@ func main() {
 			app.StopProcess(*service, *process)
 		}
 	case "check":
+		var result []models.CheckResult
 		if *service == "" {
-			result := app.CheckAll()
-			if *jsonOutput {
-				jsonBytes, err := json.MarshalIndent(result, "", "  ")
-				if err != nil {
-					logger.Fatalf("Error marshaling JSON: %v", err)
-				}
-				fmt.Println(string(jsonBytes))
-			} else {
-				printCheckResultTable(result)
-			}
+			result = app.CheckAll()
 		} else if *process == "" {
-			result := app.CheckService(*service)
-			if *jsonOutput {
-				// ... (similar to above, marshal and print JSON)
-			} else {
-				printCheckResultTable(result)
-			}
+			result = app.CheckService(*service)
 		} else {
-			result := app.CheckProcess(*service, *process)
-			if *jsonOutput {
-				// ... (similar to above, marshal and print JSON)
-			} else {
-				printCheckResultTable(result)
+			result = app.CheckProcess(*service, *process)
+		}
+		if *jsonOutput {
+			jsonBytes, err := json.MarshalIndent(result, "", "  ")
+			if err != nil {
+				logger.Fatalf("Error marshaling JSON: %v", err)
 			}
+			fmt.Println(string(jsonBytes))
+		} else {
+			printCheckResultTable(result)
 		}
 	default:
 		fmt.Println("Invalid command. Use start, stop, or check.")

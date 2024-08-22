@@ -21,7 +21,7 @@ func TestLoadConfig(t *testing.T) {
 	if len(cfg.Services) != 7 {
 		t.Errorf("Expected 2 services, but got %d", len(cfg.Services))
 	}
-	// ... (Add more assertions as needed)
+	//TODO: add more assertions
 
 	// Test loading an invalid config file
 	_, err = config.LoadConfig("invalid_config.yaml")

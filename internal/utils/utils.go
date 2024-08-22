@@ -69,9 +69,6 @@ func validateConfig(cfg *models.Config) error {
 			processNames[process.Name] = true
 		}
 	}
-
-	// ... (Add more validation checks as needed)
-
 	return nil
 }
 
@@ -100,7 +97,6 @@ func topologicalSort(graph map[string][]string, cfg *models.Config) ([]*models.S
 			}
 		}
 	}
-
 	return stack, nil
 }
 

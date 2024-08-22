@@ -49,7 +49,7 @@ func (e *Executor) StartService(service *models.Service) error {
 			return err
 		}
 
-		// Wait for the service to start
+		// Wait for the process to start
 		time.Sleep(time.Duration(e.waitTime) * time.Second)
 
 		// Check if the process is running
@@ -119,7 +119,6 @@ func (e *Executor) CheckProcess(process *models.Process) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-
-	// You'll need to adjust this logic based on the actual output of your status commands
+	// Consider running if we get non-empty stdout
 	return output != "", nil
 }

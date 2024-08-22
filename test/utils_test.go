@@ -62,9 +62,9 @@ func TestValidateConfigAndBuildDependencyTree(t *testing.T) {
 
 	// Check if the dependency tree is constructed correctly
 	expectedTree := []*models.Service{
-		{Name: "service2", Dependents: []*models.Service{{Name: "service1"}}}, // Add Dependents to service2
+		{Name: "service2", Dependents: []*models.Service{{Name: "service1"}}},
 	}
-
+	//TODO: Fix equals checking. Why is it failing?
 	if !(&dependencyConfig.DependencyTree == &expectedTree) {
 		t.Errorf("Incorrect dependency tree construction.\nExpected: %+v\nGot: %+v", expectedTree, dependencyConfig.DependencyTree)
 	}
@@ -73,19 +73,16 @@ func TestValidateConfigAndBuildDependencyTree(t *testing.T) {
 
 // Test for GetRootNodes
 func TestGetRootNodes(t *testing.T) {
-	// Setup the services with Dependencies and Dependents
 	service1 := &models.Service{Name: "service1"}
 	service2 := &models.Service{Name: "service2"}
 	service3 := &models.Service{Name: "service3"}
 
-	// Manually link dependencies
 	service2.Dependencies = append(service2.Dependencies, service1)
 	service3.Dependencies = append(service3.Dependencies, service1)
 	service1.Dependents = append(service1.Dependents, service2, service3)
 
 	services := []*models.Service{service1, service2, service3}
 
-	// Now correctly identify the root nodes
 	rootNodes := utils.GetRootNodes(services)
 
 	if len(rootNodes) != 1 || rootNodes[0].Name != "service1" {
@@ -123,7 +120,6 @@ func containsService(services []*models.Service, name string) bool {
 	return false
 }
 
-// Test for FindServiceByName
 func TestFindServiceByName(t *testing.T) {
 	config := &models.Config{
 		Services: []models.Service{
@@ -146,7 +142,6 @@ func TestFindServiceByName(t *testing.T) {
 	}
 }
 
-// Test for FindProcessByName
 func TestFindProcessByName(t *testing.T) {
 	service := &models.Service{
 		Name: "test_service",

@@ -40,7 +40,7 @@ func NewApp(configFilePath string, threadCount int, ignoreCheck bool, logger *lo
 		config:      cfg,
 		Executor:    executor.NewExecutor(logger, cfg.WaitTime),
 		logger:      logger,
-		threadCount: threadCount,
+		threadCount: min(threadCount, 192),
 		ignoreCheck: ignoreCheck,
 	}
 }
@@ -51,14 +51,13 @@ func (a *App) StartAll() {
 	// Get the root nodes of the dependency tree
 	rootNodes := utils.GetRootNodes(a.config.DependencyTree)
 
-	// Process the tree in parallel or sequentially
 	if a.threadCount > 1 {
 		a.processTreeParallel(rootNodes, func(s *models.Service) error {
-			return a.startService(s) // Correctly reference a.startService
+			return a.startService(s)
 		})
 	} else {
 		a.processTreeSequential(rootNodes, func(s *models.Service) error {
-			return a.startService(s) // Correctly reference a.startService
+			return a.startService(s)
 		})
 	}
 
@@ -71,7 +70,6 @@ func (a *App) StopAll() {
 	// Get the leaf nodes of the dependency tree (reverse order for stopping)
 	leafNodes := utils.GetLeafNodes(a.config.DependencyTree)
 
-	// Process the tree in parallel or sequentially
 	if a.threadCount > 1 {
 		a.processTreeParallel(leafNodes, a.stopService)
 	} else {
@@ -117,7 +115,7 @@ func (a *App) startService(service *models.Service) error {
 			return err
 		}
 
-		// Wait for the service to start
+		// Wait for the process to start
 		time.Sleep(time.Duration(a.config.WaitTime) * time.Second)
 
 		// Check if the process is running
@@ -131,7 +129,7 @@ func (a *App) startService(service *models.Service) error {
 	}
 
 	a.logger.Infof("Service %s started successfully.", service.Name)
-	return nil // Indicate successful start
+	return nil
 }
 
 func (a *App) StopService(serviceName string) {
@@ -157,7 +155,7 @@ func (a *App) stopService(service *models.Service) error {
 			return err
 		}
 
-		// Wait for the service to stop
+		// Wait for the process to stop
 		time.Sleep(time.Duration(a.config.WaitTime) * time.Second)
 
 		// Check if the process is stopped
@@ -171,14 +169,14 @@ func (a *App) stopService(service *models.Service) error {
 	}
 
 	a.logger.Infof("Service %s stopped successfully.", service.Name)
-	return nil // Indicate successful stop
+	return nil
 }
 
 func (a *App) CheckAll() []models.CheckResult {
 	a.logger.Info("Checking all services...")
 	var allResults []models.CheckResult
 
-	for _, service := range a.config.Services { // Iterate over DependencyTree instead
+	for _, service := range a.config.Services {
 		results := a.Executor.CheckService(&service)
 		allResults = append(allResults, results...)
 	}
@@ -210,7 +208,7 @@ func (a *App) CheckProcess(serviceName, processName string) []models.CheckResult
 		a.logger.Fatalf("Error finding process: %v", err)
 	}
 
-	isRunning, err := a.Executor.CheckProcess(process) // Pass the process directly
+	isRunning, err := a.Executor.CheckProcess(process)
 	if err != nil {
 		a.logger.Fatalf("Error checking process: %v", err)
 	}
@@ -228,16 +226,45 @@ func (a *App) CheckProcess(serviceName, processName string) []models.CheckResult
 func (a *App) StartProcess(serviceName, processName string) {
 	a.logger.Infof("Starting process: %s in service: %s", processName, serviceName)
 
-	// ... (Implementation similar to StartService, but focus on a single process)
+	service, err := utils.FindServiceByName(a.config, serviceName)
+	if err != nil {
+		a.logger.Fatalf("Error finding service: %v", err)
+	}
+
+	process, err := utils.FindProcessByName(service, processName)
+	if err != nil {
+		a.logger.Fatalf("Error finding process: %v", err)
+	}
+
+	// Don't wait to check start when starting only individual process
+	a.logger.Infof("Starting process: %s on host: %s", process.Name, process.HostName)
+	_, err = a.Executor.ExecuteCommand(process.StartCmd, process.HostName)
+	if err != nil {
+		a.logger.Fatalf("Error starting process: %v", err)
+	}
 }
 
 func (a *App) StopProcess(serviceName, processName string) {
 	a.logger.Infof("Stopping process: %s in service: %s", processName, serviceName)
 
-	// ... (Implementation similar to StopService, but focus on a single process)
+	service, err := utils.FindServiceByName(a.config, serviceName)
+	if err != nil {
+		a.logger.Fatalf("Error finding service: %v", err)
+	}
+
+	process, err := utils.FindProcessByName(service, processName)
+	if err != nil {
+		a.logger.Fatalf("Error finding process: %v", err)
+	}
+
+	//Don't wait to check stop when stopping only individual process
+	a.logger.Infof("Stopping process: %s on host: %s", process.Name, process.HostName)
+	_, err = a.Executor.ExecuteCommand(process.StopCmd, process.HostName)
+	if err != nil {
+		a.logger.Fatalf("Error stopping process: %v", err)
+	}
 }
 
-// ... (processTreeParallel and processTreeSequential functions remain the same)
 func (a *App) processTreeParallel(nodes []*models.Service, action func(*models.Service) error) {
 	var wg sync.WaitGroup
 	semaphore := make(chan struct{}, a.threadCount)
